@@ -55,7 +55,9 @@ static libcamera::PixelFormat mode_to_pixel_format(Mode const &mode)
 		{ Mode(0, 0, 12, true), libcamera::formats::SBGGR12_CSI2P },
 	};
 
-	auto it = std::find_if(table.begin(), table.end(), [&mode] (auto &m) { return mode.bit_depth == m.first.bit_depth && mode.packed == m.first.packed; });
+	auto it = std::find_if(table.begin(), table.end(),
+						   [&mode](auto &m)
+						   { return mode.bit_depth == m.first.bit_depth && mode.packed == m.first.packed; });
 	if (it != table.end())
 		return it->second;
 
@@ -125,8 +127,8 @@ void LibcameraApp::OpenCamera()
 	if (!options_->post_process_file.empty())
 		post_processor_.Read(options_->post_process_file);
 	// The queue takes over ownership from the post-processor.
-	post_processor_.SetCallback(
-		[this](CompletedRequestPtr &r) { this->msg_queue_.Post(Msg(MsgType::RequestComplete, std::move(r))); });
+	post_processor_.SetCallback([this](CompletedRequestPtr &r)
+								{ this->msg_queue_.Post(Msg(MsgType::RequestComplete, std::move(r))); });
 
 	if (options_->framerate)
 	{
@@ -520,8 +522,7 @@ void LibcameraApp::StartCamera()
 		else if (!options_->framerate || options_->framerate.value() > 0)
 		{
 			int64_t frame_time = 1000000 / options_->framerate.value_or(DEFAULT_FRAMERATE); // in us
-			controls_.set(controls::FrameDurationLimits,
-						  libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
+			controls_.set(controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
 		}
 	}
 
@@ -951,7 +952,7 @@ void LibcameraApp::previewThread()
 				preview_cond_var_.wait(lock);
 		}
 
-		if (item.stream->configuration().pixelFormat != libcamera::formats::YUV420)
+		if (item.stream->configuration().pixelFormat != libcamera::formats::YUV420 && !options_->nopreview)
 			throw std::runtime_error("Preview windows only support YUV420");
 
 		StreamInfo info = GetStreamInfo(item.stream);
